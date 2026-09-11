@@ -1,0 +1,6 @@
+{
+  "name": "ZeroTrace Cyber Portal",
+  "description": "Cybersecurity and system intelligence hub featuring neon cyber theme, interactive search bar, PIN input console, and pinned command management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
