@@ -1,0 +1,360 @@
+@import "tailwindcss";
+
+@theme {
+  --font-orbitron: 'Orbitron', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Inter', sans-serif;
+  --color-cyber-bg: #020d06;
+  --color-cyber-bg2: #040f08;
+  --color-cyber-card: #071510;
+  --color-cyber-card2: #0a1e12;
+  --color-cyber-border: #0f3320;
+  --color-cyber-border2: #1a5c35;
+  --color-cyber-green: #c8ff00;
+  --color-cyber-green2: #7fff50;
+  --color-cyber-cyan: #00ffd5;
+  --color-cyber-yellow: #ffe600;
+  --color-cyber-red: #ff4060;
+  --color-cyber-white: #f0fff4;
+  --color-cyber-muted: #3d7a52;
+  --color-cyber-muted2: #2a5038;
+}
+
+:root {
+  --bg: #020d06;
+  --bg2: #040f08;
+  --card: #071510;
+  --card2: #0a1e12;
+  --border: #0f3320;
+  --border2: #1a5c35;
+  --green: #c8ff00;
+  --green2: #7fff50;
+  --green3: rgba(200, 255, 0, 0.08);
+  --cyan: #00ffd5;
+  --yellow: #ffe600;
+  --red: #ff4060;
+  --white: #f0fff4;
+  --muted: #3d7a52;
+  --muted2: #2a5038;
+  --glow: 0 0 20px rgba(200, 255, 0, 0.35), 0 0 60px rgba(200, 255, 0, 0.12);
+  --glow-sm: 0 0 10px rgba(200, 255, 0, 0.3);
+  --glow-cyan: 0 0 20px rgba(0, 255, 213, 0.35), 0 0 50px rgba(0, 255, 213, 0.15);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100dvh;
+}
+
+/* Android & Mobile Viewport / Input Auto-Zoom Prevention */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important; /* Prevents Android Chrome from zooming in */
+  }
+}
+
+/* Mobile & Android Smooth Touch Scrolling & Hide Scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* Android modal scroll containment */
+.overscroll-contain {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Android Touch Target Performance */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+input, textarea, [contenteditable="true"], .selectable-text {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Background Grid effect */
+.cyber-grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: 
+    linear-gradient(rgba(200, 255, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 255, 0, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+.cyber-grid-dense {
+  background-image: 
+    linear-gradient(rgba(0, 255, 213, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 213, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Glowing text effects */
+.glow-text {
+  text-shadow: 0 0 18px rgba(200, 255, 0, 0.65), 0 0 35px rgba(200, 255, 0, 0.3);
+}
+
+.glow-cyan-text {
+  text-shadow: 0 0 18px rgba(0, 255, 213, 0.65), 0 0 35px rgba(0, 255, 213, 0.3);
+}
+
+.glow-box {
+  box-shadow: 0 0 25px rgba(200, 255, 0, 0.12), inset 0 0 15px rgba(200, 255, 0, 0.04);
+}
+
+.glow-box-focus:focus-within {
+  box-shadow: 0 0 30px rgba(200, 255, 0, 0.25), 0 0 8px rgba(200, 255, 0, 0.5);
+  border-color: #c8ff00;
+}
+
+/* Corner brackets for cyber HUD */
+.hud-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: #c8ff00;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.hud-tl { top: 6px; left: 6px; border-top: 2px solid #c8ff00; border-left: 2px solid #c8ff00; }
+.hud-tr { top: 6px; right: 6px; border-top: 2px solid #c8ff00; border-right: 2px solid #c8ff00; }
+.hud-bl { bottom: 6px; left: 6px; border-bottom: 2px solid #c8ff00; border-left: 2px solid #c8ff00; }
+.hud-br { bottom: 6px; right: 6px; border-bottom: 2px solid #c8ff00; border-right: 2px solid #c8ff00; }
+
+/* Custom Scanlines */
+.scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}
+
+/* Ticker Animation */
+@keyframes tickerSlide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-ticker {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: tickerSlide 35s linear infinite;
+}
+
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* Radar pulse animation */
+@keyframes radarSweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-radar {
+  animation: radarSweep 8s linear infinite;
+}
+
+/* Error Shake Animation */
+@keyframes cyberShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: cyberShake 0.45s ease-in-out;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #020d06;
+}
+::-webkit-scrollbar-thumb {
+  background: #1a5c35;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c8ff00;
+}
+
+/* High Performance Cyber Edge Cards (GPU Hardware Accelerated) */
+.cyber-edge-beam-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(7, 21, 16, 0.95) 0%, rgba(3, 14, 8, 0.98) 100%);
+  border: 1.5px solid #1a5c35;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 255, 213, 0.06);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s ease, box-shadow 0.18s ease;
+  contain: layout style paint;
+}
+
+.cyber-edge-beam-card:hover {
+  border-color: #00ffd5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 255, 213, 0.25), inset 0 0 15px rgba(0, 255, 213, 0.04);
+  transform: translateY(-2px);
+}
+
+.cyber-edge-beam-card.is-selected {
+  border-color: #c8ff00;
+  box-shadow: 0 0 25px rgba(200, 255, 0, 0.35), 0 0 12px rgba(0, 255, 213, 0.2), inset 0 0 15px rgba(200, 255, 0, 0.08);
+}
+
+/* Fast Zero-Lag Input Controls */
+.cyber-edge-beam-input {
+  background: #020d06 !important;
+  border: 1.5px solid #1a5c35 !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cyber-edge-beam-input:focus {
+  border-color: #00ffd5 !important;
+  box-shadow: 0 0 18px rgba(0, 255, 213, 0.3), inset 0 0 10px rgba(0, 255, 213, 0.04);
+}
+
+.cyber-edge-beam-input.is-denied {
+  background: #0a0305 !important;
+  border-color: #ff4060 !important;
+  box-shadow: 0 0 20px rgba(255, 64, 96, 0.35) !important;
+}
+
+.cyber-edge-beam-input.is-granted {
+  background: #020d06 !important;
+  border-color: #c8ff00 !important;
+  box-shadow: 0 0 20px rgba(200, 255, 0, 0.35) !important;
+}
+
+/* Fast Zero-Lag Terminal Window */
+.cyber-edge-beam-terminal {
+  position: relative;
+  background: linear-gradient(135deg, rgba(2, 13, 6, 0.98) 0%, rgba(1, 8, 4, 0.99) 100%);
+  border: 1.5px solid #0f3320;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+  contain: content;
+}
+
+/* High Performance Liquid Glass Card & Controls */
+.liquid-glass-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(6, 18, 12, 0.95) 0%, rgba(3, 12, 7, 0.98) 100%);
+  border: 1.5px solid rgba(0, 255, 213, 0.4);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 255, 213, 0.15);
+  contain: layout style;
+}
+
+.liquid-glass-button {
+  position: relative;
+  background: linear-gradient(135deg, rgba(7, 24, 15, 0.92) 0%, rgba(2, 12, 6, 0.96) 100%);
+  border: 1.5px solid #1a5c35;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.liquid-glass-button:hover {
+  border-color: #00ffd5;
+  box-shadow: 0 0 16px rgba(0, 255, 213, 0.35);
+  transform: translateY(-1px);
+}
+
+.liquid-glass-button:active {
+  transform: scale(0.96);
+}
+
+.rgb-edge-slot {
+  position: relative;
+  background: linear-gradient(135deg, rgba(5, 17, 10, 0.92) 0%, rgba(2, 10, 5, 0.96) 100%);
+  border: 1.5px solid #1a5c35;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.rgb-edge-badge {
+  position: relative;
+  background: linear-gradient(135deg, rgba(6, 22, 14, 0.94) 0%, rgba(2, 12, 6, 0.98) 100%);
+  border: 1.5px solid rgba(0, 255, 213, 0.5);
+  box-shadow: 0 0 20px rgba(0, 255, 213, 0.25);
+}
+
+/* Optimized ambient background orbs - using radial gradients instead of heavy GPU filter blurs */
+.liquid-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.45;
+  will-change: transform;
+}
+
+@keyframes liquidFloat {
+  0% {
+    transform: translate(0px, 0px) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate(40px, -50px) scale(1.15) rotate(45deg);
+  }
+  66% {
+    transform: translate(-30px, 40px) scale(0.9) rotate(90deg);
+  }
+  100% {
+    transform: translate(25px, -20px) scale(1.05) rotate(180deg);
+  }
+}
+
+.liquid-orb-2 {
+  animation: liquidFloat2 16s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes liquidFloat2 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(-60px, 50px) scale(1.2);
+  }
+  100% {
+    transform: translate(50px, -40px) scale(0.85);
+  }
+}
