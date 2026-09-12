@@ -413,51 +413,78 @@ app.get('/api/pin/history', async (req, res) => {
 const API_BASE = 'https://api-src.alonepatel.shop/api';
 const DEFAULT_KEY = 'INDIAN_HACKER_BRO';
 
+// ⚙️ PHONE LOOKUP DEDICATED CONFIGURATION (Isse aap future me easily change kar sakte hain)
+const PHONE_API_BASE = 'https://storage-deutschland-don-patterns.trycloudflare.com/num';
+const PHONE_DEFAULT_KEY = 'DADDY';
+
+
 // Helper to proxy requests safely and guarantee JSON response
 async function proxyRemoteApi(url: string, res: express.Response) {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+  const maxAttempts = 2;
+  const timeoutMs = 45000; // 45 seconds to allow deep telecom and KYC lookups
 
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'User-Agent': 'ZeroTrace-Cyber-Portal/1.0'
-      }
-    });
-    clearTimeout(timeout);
-
-    const text = await response.text();
-    res.setHeader('Content-Type', 'application/json');
-
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const parsed = JSON.parse(text);
-      return res.status(response.status).json(parsed);
-    } catch {
-      return res.status(200).json({
-        status: 'success',
-        raw: text
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Referer': 'https://api-src.alonepatel.shop/',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      clearTimeout(timeout);
+
+      const text = await response.text();
+      res.setHeader('Content-Type', 'application/json');
+
+      try {
+        const parsed = JSON.parse(text);
+        return res.status(response.status >= 200 && response.status < 500 ? response.status : 200).json(parsed);
+      } catch {
+        return res.status(200).json({
+          status: response.ok ? 'success' : 'error',
+          raw: text
+        });
+      }
+    } catch (err: any) {
+      if (attempt < maxAttempts) {
+        console.warn(`[Proxy] Attempt ${attempt} failed for ${url} (${err?.message || 'unknown error'}), retrying...`);
+        await new Promise(r => setTimeout(r, 1200));
+        continue;
+      }
+      console.error(`Proxy request failed for ${url}:`, err?.message || err);
+      return res.status(504).json({
+        status: false,
+        error: true,
+        message: `Gateway Timeout: Remote API took longer than ${timeoutMs / 1000}s to respond (${err?.message || 'Upstream connection error'}). Please verify the input or try again.`
       });
     }
-  } catch (err: any) {
-    console.error(`Proxy request failed for ${url}:`, err.message);
-    return res.status(502).json({
-      status: 'error',
-      message: `Gateway Proxy Error: ${err.message || 'Remote server unreachable'}`
-    });
   }
 }
 
-// 1. Phone Lookup Proxy
+// 1. Phone Lookup Proxy (NEW DEDICATED ROUTE)
 app.get('/api/phone-lookup', async (req, res) => {
   const number = (req.query.number as string) || (req.query.num as string) || '';
-  const key = (req.query.key as string) || DEFAULT_KEY;
+  
+  // Agar request me key pass nahi kiye ho, toh default PHONE_DEFAULT_KEY ('DADDY') use hoga
+  const key = (req.query.key as string) || PHONE_DEFAULT_KEY;
+  
   if (!number) {
     return res.status(400).json({ status: 'error', message: 'number query param required' });
   }
+  
   const cleanNumber = encodeURIComponent(number.trim());
-  const targetUrl = `${API_BASE}?key=${encodeURIComponent(key)}&action=num&number=${cleanNumber}`;
+  const cleanKey = encodeURIComponent(key.trim());
+  
+  // Final URL target: https://storage-deutschland-don-patterns.trycloudflare.com/num?number=9876543210&key=DADDY
+  const targetUrl = `${PHONE_API_BASE}?number=${cleanNumber}&key=${cleanKey}`;
+  
   return proxyRemoteApi(targetUrl, res);
 });
 
@@ -558,3 +585,6 @@ async function startServer() {
 }
 
 startServer();
+
+
+
