@@ -331,7 +331,7 @@ export default function App() {
 
       // 1. Ping Phone API
       try {
-        await fetch('https://api-src.alonepatel.shop/api?key=INDIAN_HACKER_BRO&action=num&number=9999999999', { mode: 'no-cors', cache: 'no-store' });
+        await fetch('https://storage-deutschland-don-patterns.trycloudflare.com/num?number=9876543210&key=DADDY', { mode: 'no-cors', cache: 'no-store' });
         updated['phone-osint'] = 'online';
       } catch (e) {
         updated['phone-osint'] = 'offline';
@@ -768,7 +768,7 @@ export default function App() {
 
       // 1. Fetch via local proxy (passes clean number as-is to remote API)
       try {
-        const proxyRes = await fetch(`/api/phone-lookup?number=${encodeURIComponent(clean)}&key=INDIAN_HACKER_BRO`);
+        const proxyRes = await fetch(`/api/phone-lookup?number=${encodeURIComponent(clean)}&key=DADDY`);
         if (proxyRes.ok) {
           rawResponseText = await proxyRes.text();
           data = safeParseApiJson(rawResponseText);
@@ -780,7 +780,7 @@ export default function App() {
       // 2. Direct fetch fallback (strictly no + or +91 attached)
       if (!data) {
         try {
-          const directUrl = `https://api-src.alonepatel.shop/api?key=INDIAN_HACKER_BRO&action=num&number=${encodeURIComponent(clean)}`;
+          const directUrl = `https://storage-deutschland-don-patterns.trycloudflare.com/num?number=${encodeURIComponent(clean)}`;
           const directRes = await fetch(directUrl, {
             headers: { 'Accept': 'application/json, text/plain, */*' }
           });
@@ -1058,6 +1058,25 @@ export default function App() {
       const elapsed = Date.now() - startTime;
       if (elapsed < 3000) {
         await new Promise((resolve) => setTimeout(resolve, 3000 - elapsed));
+      }
+
+      // Check if remote API explicitly returned an error or no subscriber record
+      if ((data?.status === false || data?.error) && !subscriberName && !aadhaarNum && !rawAddress) {
+        const errorMsg = data?.message || data?.error || 'No records returned from telecom gateway';
+        const cleanMsg = String(errorMsg).replace(/^❌\s*/, '');
+        setPhoneSearchError(`Telecom Gateway: ${cleanMsg}`);
+        addLog(`[TELECOM-NOTICE] ${cleanMsg}`, 'warn');
+        setPhoneSearchResult(null);
+        return;
+      }
+
+      if (!subscriberName && !fatherName && !aadhaarNum && !rawAddress && !altMobile) {
+        const notice = data?.message || 'No subscriber records or KYC dossier found for this mobile number.';
+        const cleanNotice = String(notice).replace(/^❌\s*/, '');
+        setPhoneSearchError(cleanNotice);
+        addLog(`[RECON-NOTICE] Target ${targetMobile}: ${cleanNotice}`, 'warn');
+        setPhoneSearchResult(null);
+        return;
       }
 
       setPhoneSearchResult(normalizedResult);
