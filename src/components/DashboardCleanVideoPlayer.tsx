@@ -6,7 +6,7 @@ interface DashboardCleanVideoPlayerProps {
 }
 
 export const DashboardCleanVideoPlayer: React.FC<DashboardCleanVideoPlayerProps> = ({
-  customSrc = 'https://res.cloudinary.com/qkmxsd52/video/upload/v1789419818/akashxeffects_14050624_015922725.mp4',
+  customSrc = 'https://res.cloudinary.com/qkmxsd52/video/upload/v1789421055/foryouamv_14050624_025024842.mp4',
 }) => {
   const [videoSrc, setVideoSrc] = useState<string>(() => {
     return localStorage.getItem('zerotrace_custom_video_url') || customSrc;
