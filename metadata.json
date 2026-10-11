@@ -1,0 +1,8 @@
+{
+  "name": "Remix ZeroTrace Cyber Portal 1",
+  "description": "Cybersecurity and OSINT intelligence portal with automated API structure adaptation, dynamic key discovery, and PIN-secured API management console.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

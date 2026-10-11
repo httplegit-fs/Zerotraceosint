@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: zerotrace-osint-gateway
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: zerotrace_auth
