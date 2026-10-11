@@ -33,10 +33,19 @@ export const DEFAULT_CLOUDINARY_VIDEOS: CloudinaryVideoItem[] = [
 ];
 
 export const DashboardCleanVideoPlayer: React.FC = () => {
-  // 3 Cloudinary Videos Playlist
-  const [videos] = useState<CloudinaryVideoItem[]>(DEFAULT_CLOUDINARY_VIDEOS);
+  // Cloudinary Videos Playlist (fetched from backend API with localStorage fallback)
+  const [videos, setVideos] = useState<CloudinaryVideoItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('cloudinary_stream_videos');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_CLOUDINARY_VIDEOS;
+  });
 
-  // Current video index (0, 1, or 2)
+  // Current video index
   const [currentIndex, setCurrentIndex] = useState<number>(0);
 
   // Default page open = UNMUTED (isMuted: false)
@@ -47,7 +56,43 @@ export const DashboardCleanVideoPlayer: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const bgVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  const activeVideo = videos[currentIndex] || videos[0];
+  // Fetch latest video streams from server API
+  const fetchStreams = async () => {
+    try {
+      const res = await fetch('/api/video-streams');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.videos) && data.videos.length > 0) {
+          setVideos(data.videos);
+          try {
+            localStorage.setItem('cloudinary_stream_videos', JSON.stringify(data.videos));
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      // Graceful fallback to initial local state
+    }
+  };
+
+  useEffect(() => {
+    fetchStreams();
+
+    const handleUpdate = () => {
+      fetchStreams();
+    };
+    window.addEventListener('video-streams-updated', handleUpdate);
+    const interval = setInterval(fetchStreams, 15000);
+
+    return () => {
+      window.removeEventListener('video-streams-updated', handleUpdate);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Safe active video calculation
+  const safeIndex = currentIndex >= videos.length ? 0 : currentIndex;
+  const activeVideo = videos[safeIndex] || videos[0] || DEFAULT_CLOUDINARY_VIDEOS[0];
+
 
   // Global Audio Unlock Listener (bypasses browser autoplay policy on first user gesture)
   useEffect(() => {

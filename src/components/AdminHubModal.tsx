@@ -127,7 +127,124 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
   onUpdateMaintenance,
   onOpenAddFeature
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'broadcast' | 'features' | 'maintenance' | 'history'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'broadcast' | 'features' | 'maintenance' | 'history' | 'videos'>('overview');
+
+
+  // Stream Videos Management State
+  const [streamVideos, setStreamVideos] = useState<Array<{ id: string; title: string; url: string }>>([]);
+  const [videosLoading, setVideosLoading] = useState<boolean>(false);
+  const [videosSaving, setVideosSaving] = useState<boolean>(false);
+  const [videosFeedback, setVideosFeedback] = useState<string | null>(null);
+
+  const [newVideoTitle, setNewVideoTitle] = useState<string>('');
+  const [newVideoUrl, setNewVideoUrl] = useState<string>('');
+
+  const fetchStreamVideos = async () => {
+    setVideosLoading(true);
+    try {
+      const res = await fetch('/api/video-streams');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.videos)) {
+          setStreamVideos(data.videos);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch stream videos in admin:', err);
+    } finally {
+      setVideosLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeTab === 'videos') {
+      fetchStreamVideos();
+    }
+  }, [activeTab]);
+
+  const handleAddVideo = () => {
+    if (!newVideoUrl.trim()) {
+      setVideosFeedback('❌ Please enter a valid Cloudinary or video stream URL.');
+      return;
+    }
+    const title = newVideoTitle.trim() || `STREAM 0${streamVideos.length + 1}`;
+    const newItem = {
+      id: `vid-${Date.now()}`,
+      title: title.toUpperCase(),
+      url: newVideoUrl.trim()
+    };
+    setStreamVideos([...streamVideos, newItem]);
+    setNewVideoTitle('');
+    setNewVideoUrl('');
+    setVideosFeedback('➕ Stream link added to list! Click "SAVE & PUBLISH LIVE" to apply.');
+  };
+
+  const handleUpdateVideo = (index: number, field: 'title' | 'url', val: string) => {
+    const updated = [...streamVideos];
+    updated[index] = { ...updated[index], [field]: val };
+    setStreamVideos(updated);
+  };
+
+  const handleDeleteVideo = (index: number) => {
+    const updated = streamVideos.filter((_, i) => i !== index);
+    setStreamVideos(updated);
+    setVideosFeedback('🗑️ Video stream removed from list. Click "SAVE & PUBLISH LIVE" to apply.');
+  };
+
+  const handleSaveVideos = async () => {
+    setVideosSaving(true);
+    setVideosFeedback(null);
+    try {
+      const res = await fetch('/api/admin/video-streams', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-PIN': '9264'
+        },
+        body: JSON.stringify({ videos: streamVideos })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStreamVideos(data.videos || streamVideos);
+        setVideosFeedback('✅ CLOUDINARY VIDEO STREAMS REPLACED & PUBLISHED LIVE TO ALL USERS!');
+        window.dispatchEvent(new Event('video-streams-updated'));
+      } else {
+        setVideosFeedback(`❌ Save failed: ${data.error || 'Server error'}`);
+      }
+    } catch (err: any) {
+      setVideosFeedback(`❌ Error saving video streams: ${err.message || 'Network error'}`);
+    } finally {
+      setVideosSaving(false);
+    }
+  };
+
+  const handleResetVideos = async () => {
+    if (!window.confirm('Reset video player streams back to default Cloudinary videos?')) return;
+    setVideosSaving(true);
+    setVideosFeedback(null);
+    try {
+      const res = await fetch('/api/admin/video-streams/reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-PIN': '9264'
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStreamVideos(data.videos || []);
+        setVideosFeedback('🟢 STREAM LINKS RESET TO DEFAULT CLOUDINARY VIDEOS!');
+        window.dispatchEvent(new Event('video-streams-updated'));
+      } else {
+        setVideosFeedback(`❌ Reset failed: ${data.error || 'Server error'}`);
+      }
+    } catch (err: any) {
+      setVideosFeedback(`❌ Error resetting video streams: ${err.message || 'Network error'}`);
+    } finally {
+      setVideosSaving(false);
+    }
+  };
+
 
   const [activityLogs, setActivityLogs] = useState<UserActivityLogItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState<boolean>(false);
@@ -443,7 +560,26 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
               </span>
             )}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('videos')}
+            className={`px-3.5 py-2 sm:px-4 sm:py-2 rounded-full font-['Orbitron'] font-bold text-[10px] sm:text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap min-h-[38px] touch-manipulation liquid-glass-pill ${
+              activeTab === 'videos'
+                ? 'text-[#00ffd5] border-[#00ffd5]/60 shadow-[0_0_15px_rgba(0,255,213,0.3)]'
+                : 'text-[#3d7a52] opacity-75 hover:opacity-100 hover:text-[#f0fff4]'
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5 text-[#00ffd5]" />
+            <span>STREAM VIDEOS</span>
+            {streamVideos.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-[#00ffd5]/20 text-[#00ffd5] font-mono text-[9px] font-bold">
+                {streamVideos.length}
+              </span>
+            )}
+          </button>
         </div>
+
 
         {/* Modal Scrollable Content Area */}
         <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(94dvh-140px)] space-y-4">
@@ -687,11 +823,30 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-[#00ffd5] group-hover:translate-x-1 transition-transform shrink-0" />
                 </div>
               )}
+
+              {/* OPTION 5: STREAM VIDEO LINKS MANAGER */}
+              <div 
+                onClick={() => setActiveTab('videos')}
+                className="group relative p-3.5 sm:p-4 rounded-2xl bg-[#020d06] hover:bg-[#071a10] border border-[#0f3320] hover:border-[#00ffd5] transition-all duration-300 cursor-pointer flex items-center justify-between gap-3 touch-manipulation"
+              >
+                <div className="flex items-center gap-3">
+                  <Radio className="w-5 h-5 text-[#00ffd5] shrink-0 animate-pulse" />
+                  <div>
+                    <h5 className="font-['Orbitron'] text-xs sm:text-sm font-bold text-[#f0fff4] group-hover:text-[#00ffd5] transition-colors">
+                      STREAM VIDEO LINKS & CLOUDINARY MANAGER
+                    </h5>
+                    <p className="font-['JetBrains_Mono'] text-[10px] text-[#3d7a52]">
+                      Add, replace, or edit video stream links ({streamVideos.length} active links) published live to all users.
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-[#00ffd5] group-hover:translate-x-1 transition-transform shrink-0" />
+              </div>
             </div>
           )}
+
 
           {/* TAB 2: SYSTEM BROADCAST EDITOR */}
           {activeTab === 'broadcast' && (
@@ -1190,6 +1345,183 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
               })()}
             </div>
           )}
+
+          {/* TAB 6: STREAM VIDEOS MANAGEMENT */}
+          {activeTab === 'videos' && (
+            <div className="space-y-4 animate-fade-in">
+              {/* Stream Videos Header Card */}
+              <div className="p-4 rounded-2xl bg-[#020d06] border border-[#1a5c35] space-y-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-['Orbitron'] text-xs sm:text-sm font-bold text-[#00ffd5] uppercase tracking-wider flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-[#00ffd5] animate-pulse" />
+                      <span>CLOUDINARY & STREAM VIDEO LINKS MANAGER</span>
+                    </h4>
+                    <p className="font-['JetBrains_Mono'] text-[11px] text-[#3d7a52] mt-0.5">
+                      Add new video stream links, edit titles, replace existing Cloudinary streams, and publish live to all user sessions.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap self-end sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={handleResetVideos}
+                      disabled={videosSaving}
+                      className="px-3 py-1.5 rounded-full liquid-glass-pill text-[#ff4060] border-[#ff4060]/40 text-xs font-['Orbitron'] font-bold flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>RESET DEFAULTS</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveVideos}
+                      disabled={videosSaving}
+                      className="px-4 py-2 rounded-full bg-[#00ffd5] hover:bg-[#33ffe0] text-[#020d06] font-['Orbitron'] font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,213,0.4)] active:scale-95 cursor-pointer min-h-[38px]"
+                    >
+                      <Send className="w-4 h-4" />
+                      <span>{videosSaving ? 'PUBLISHING...' : 'SAVE & PUBLISH LIVE'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {videosFeedback && (
+                  <div className="p-3 rounded-xl bg-[#071510] border border-[#00ffd5]/40 text-xs font-['JetBrains_Mono'] text-[#f0fff4] animate-fade-in flex items-center justify-between">
+                    <span>{videosFeedback}</span>
+                    <button type="button" onClick={() => setVideosFeedback(null)} className="text-[#3d7a52] hover:text-[#00ffd5]">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Add New Stream Link Form */}
+              <div className="p-4 rounded-2xl bg-[#071510] border-2 border-[#1a5c35] space-y-3">
+                <h5 className="font-['Orbitron'] text-xs font-bold text-[#c8ff00] uppercase tracking-wider flex items-center gap-2">
+                  <Plus className="w-4 h-4 text-[#c8ff00]" />
+                  <span>ADD NEW VIDEO STREAM LINK</span>
+                </h5>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="block text-[10px] font-['JetBrains_Mono'] text-[#3d7a52] uppercase mb-1">
+                      STREAM TITLE / NAME
+                    </label>
+                    <input
+                      type="text"
+                      value={newVideoTitle}
+                      onChange={(e) => setNewVideoTitle(e.target.value)}
+                      placeholder={`e.g. STREAM 0${streamVideos.length + 1}`}
+                      className="w-full px-3 py-2 rounded-xl bg-[#020d06] border border-[#0f3320] focus:border-[#00ffd5] text-[#f0fff4] font-['JetBrains_Mono'] text-xs outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-['JetBrains_Mono'] text-[#3d7a52] uppercase mb-1">
+                      VIDEO URL / CLOUDINARY DIRECT LINK
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newVideoUrl}
+                        onChange={(e) => setNewVideoUrl(e.target.value)}
+                        placeholder="https://res.cloudinary.com/... or direct video URL"
+                        className="w-full px-3 py-2 rounded-xl bg-[#020d06] border border-[#0f3320] focus:border-[#00ffd5] text-[#f0fff4] font-['JetBrains_Mono'] text-xs outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddVideo}
+                        className="px-4 py-2 rounded-xl bg-[#c8ff00] hover:bg-[#d8ff33] text-[#020d06] font-['Orbitron'] font-black text-xs uppercase tracking-wider shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>ADD</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Existing Video Streams List */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h5 className="font-['Orbitron'] text-xs font-bold text-[#f0fff4] uppercase tracking-wider flex items-center gap-2">
+                    <span>ACTIVE STREAM PLAYLIST ({streamVideos.length})</span>
+                  </h5>
+                  <span className="text-[10px] font-['JetBrains_Mono'] text-[#3d7a52]">
+                    Edit titles or replace Cloudinary URLs live
+                  </span>
+                </div>
+
+                {streamVideos.length === 0 ? (
+                  <div className="p-8 rounded-2xl bg-[#020d06] border border-[#0f3320] text-center space-y-2">
+                    <Radio className="w-8 h-8 text-[#3d7a52] mx-auto opacity-50" />
+                    <p className="font-['Orbitron'] text-xs text-[#3d7a52] uppercase">
+                      No video stream links configured. Add a link above or click Reset Defaults.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                    {streamVideos.map((vid, idx) => (
+                      <div
+                        key={vid.id || idx}
+                        className="p-3.5 rounded-2xl bg-[#020d06] border border-[#0f3320] hover:border-[#00ffd5]/40 transition-all space-y-3 relative group"
+                      >
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#0f3320] pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-[#071510] border border-[#1a5c35] text-[#00ffd5] font-['Orbitron'] text-xs font-black flex items-center justify-center">
+                              {idx + 1}
+                            </span>
+                            <input
+                              type="text"
+                              value={vid.title}
+                              onChange={(e) => handleUpdateVideo(idx, 'title', e.target.value)}
+                              className="px-2 py-1 rounded-lg bg-[#071510] border border-[#0f3320] focus:border-[#00ffd5] text-[#00ffd5] font-['Orbitron'] text-xs font-bold outline-none"
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-2 self-end sm:self-auto">
+                            <span className="px-2 py-0.5 rounded bg-[#00ffd5]/10 text-[#00ffd5] font-mono text-[9px] font-bold">
+                              ACTIVE
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteVideo(idx)}
+                              className="p-1.5 rounded-lg bg-[#071510] hover:bg-[#1a0509] border border-[#0f3320] hover:border-[#ff4060] text-[#3d7a52] hover:text-[#ff4060] transition-colors cursor-pointer"
+                              title="Delete stream"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={vid.url}
+                            onChange={(e) => handleUpdateVideo(idx, 'url', e.target.value)}
+                            placeholder="https://res.cloudinary.com/..."
+                            className="w-full px-3 py-2 rounded-xl bg-[#071510] border border-[#0f3320] focus:border-[#00ffd5] text-[#f0fff4] font-['JetBrains_Mono'] text-xs outline-none"
+                          />
+
+                          {vid.url && (
+                            <div className="relative rounded-xl overflow-hidden border border-[#0f3320] bg-black max-h-36 flex items-center justify-center">
+                              <video
+                                src={vid.url}
+                                controls
+                                preload="metadata"
+                                className="w-full max-h-32 object-contain"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
 
           {/* Database Security Footer */}
           <div className="p-3 rounded-xl bg-[#020d06] border border-[#0f3320] flex items-center justify-between text-[11px] font-['JetBrains_Mono'] text-[#3d7a52]">
